@@ -69,6 +69,14 @@ class MLTutorUI:
                 border-radius: 10px;
                 margin: 0.5rem 0;
             }
+            /* Adding styles for visualization section */
+            .viz-container {
+                background-color: #f8f9fa;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 1rem 0;
+                border: 2px solid #e9ecef;
+            }
         </style>
         """, unsafe_allow_html=True)
     
@@ -140,8 +148,35 @@ class MLTutorUI:
                     self.memory_manager.add_message("user", f"Explain: {selected_topic}")
                     self.memory_manager.add_message("assistant", explanation)
                     self.memory_manager.save_conversation(f"Explain: {selected_topic}", explanation)
+                    
+                    self.render_visualization_section(selected_topic)
                 else:
                     st.error(explanation)
+    
+    def render_visualization_section(self, topic: str):
+        """Render interactive visualizations for the topic"""
+        st.markdown('<h3 class="sub-header">📊 Interactive Visualization</h3>', unsafe_allow_html=True)
+        
+        # Get visualization for the topic
+        viz_fig = self.tutor.get_visualization(topic)
+        
+        if viz_fig:
+            st.markdown('<div class="viz-container">', unsafe_allow_html=True)
+            st.plotly_chart(viz_fig, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Add explanation for the visualization
+            st.info(f"💡 **Visualization Insight**: This interactive chart shows how {topic} works with sample data. "
+                   f"You can hover over points for details and zoom in/out to explore the algorithm's behavior.")
+        else:
+            # Show algorithm comparison chart as fallback
+            st.markdown('<div class="viz-container">', unsafe_allow_html=True)
+            comparison_fig = self.tutor.get_algorithm_comparison()
+            st.plotly_chart(comparison_fig, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.info("💡 **Algorithm Comparison**: While a specific visualization isn't available for this topic, "
+                   "here's how different ML algorithms compare in terms of accuracy, speed, and interpretability.")
     
     def render_chat_history(self):
         """Render the chat history section"""
@@ -175,8 +210,8 @@ class MLTutorUI:
         self.render_header()
         self.render_sidebar()
         
-        # Main content area
-        col1, col2 = st.columns([1, 2])
+        # Main content area with better proportions for visualizations
+        col1, col2 = st.columns([1, 3])
         
         with col1:
             self.render_input_section()
