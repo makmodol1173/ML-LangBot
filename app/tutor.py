@@ -4,10 +4,11 @@ Contains the AI logic for generating ML explanations using Gemini
 """
 
 import os
-from typing import Generator, Optional
+from typing import Generator, Optional, Dict, List, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from .visualizations import MLVisualizer
+from .practice_problems import PracticeProblemsGenerator
 
 
 class MLTutor:
@@ -17,6 +18,8 @@ class MLTutor:
         self.llm = None
         self.prompt_template = self._create_prompt_template()
         self.visualizer = MLVisualizer()
+        self.practice_generator = PracticeProblemsGenerator()
+        self.practice_prompt_template = self._create_practice_prompt_template()
         self._initialize_llm()
     
     def _create_prompt_template(self) -> PromptTemplate:
@@ -59,6 +62,39 @@ Topic: {topic}
 Chat History: {chat_history}
 
 Please provide your response in the exact format specified above."""
+        )
+    
+    def _create_practice_prompt_template(self) -> PromptTemplate:
+        """Create prompt template for generating custom practice problems"""
+        return PromptTemplate(
+            input_variables=["topic", "difficulty", "problem_type"],
+            template="""You are an expert ML educator creating practice problems.
+
+Create a {problem_type} problem for {topic} at {difficulty} level.
+
+For QUIZ problems, provide:
+- A clear, specific question about {topic}
+- 4 multiple choice options
+- The correct answer (0-3)
+- A detailed explanation of why the answer is correct
+
+For CODING problems, provide:
+- A practical problem statement
+- Starter code with TODO comments
+- Complete solution code
+- Brief explanation of the solution approach
+
+For SCENARIO problems, provide:
+- A real-world business scenario
+- The ML problem to solve
+- Key considerations and approach
+- Expected outcomes
+
+Topic: {topic}
+Difficulty: {difficulty}
+Problem Type: {problem_type}
+
+Generate the problem following the format above."""
         )
     
     def _initialize_llm(self) -> bool:
@@ -134,6 +170,84 @@ Please provide your response in the exact format specified above."""
         """Get visualization for the given topic"""
         return self.visualizer.get_algorithm_visualization(topic)
     
+    def has_visualization(self, topic: str) -> bool:
+        """Check if a specific visualization exists for the given topic"""
+        return self.visualizer.has_visualization(topic)
+    
     def get_algorithm_comparison(self):
         """Get algorithm comparison chart"""
         return self.visualizer.create_algorithm_comparison_chart()
+    
+    def get_practice_problems(self, topic: str, difficulty: str = "Beginner") -> Dict[str, Any]:
+        """Get comprehensive practice problems for a topic"""
+        return self.practice_generator.generate_comprehensive_exercise(topic, difficulty)
+    
+    def get_quiz_questions(self, topic: str, num_questions: int = 3) -> List[Dict]:
+        """Get quiz questions for a specific topic"""
+        return self.practice_generator.get_quiz_questions(topic, num_questions)
+    
+    def get_coding_problem(self, topic: str, difficulty: str = "Beginner") -> Dict[str, Any]:
+        """Get coding problem for a specific topic"""
+        return self.practice_generator.generate_coding_problem(topic, difficulty)
+    
+    def get_dataset_problem(self, topic: str) -> Dict[str, Any]:
+        """Get dataset-based problem for hands-on practice"""
+        return self.practice_generator.generate_dataset_problem(topic)
+    
+    def generate_custom_practice_problem(self, topic: str, difficulty: str = "Beginner", 
+                                       problem_type: str = "quiz") -> str:
+        """Generate custom practice problem using AI"""
+        if not self.is_initialized():
+            return "Error: LLM not initialized. Please check your Google API key."
+        
+        try:
+            prompt_text = self.practice_prompt_template.format(
+                topic=topic,
+                difficulty=difficulty,
+                problem_type=problem_type.upper()
+            )
+            response = self.llm.invoke(prompt_text)
+            return getattr(response, 'content', str(response))
+        except Exception as e:
+            return f"Error generating custom problem: {e}"
+    
+    def get_available_practice_topics(self) -> List[str]:
+        """Get list of topics with available practice problems"""
+        return self.practice_generator.get_available_topics()
+    
+    def get_difficulty_levels(self) -> List[str]:
+        """Get available difficulty levels for practice problems"""
+        return self.practice_generator.get_problem_difficulty_levels()
+    
+    def evaluate_coding_solution(self, topic: str, user_code: str, difficulty: str = "Beginner") -> str:
+        """Evaluate user's coding solution using AI"""
+        if not self.is_initialized():
+            return "Error: LLM not initialized. Please check your Google API key."
+        
+        # Get the expected solution
+        coding_problem = self.get_coding_problem(topic, difficulty)
+        expected_solution = coding_problem.get("solution", "")
+        
+        evaluation_prompt = f"""
+        You are an expert ML code reviewer. Evaluate the following student code for a {topic} problem.
+        
+        Expected Solution:
+        {expected_solution}
+        
+        Student Code:
+        {user_code}
+        
+        Provide feedback on:
+        1. Correctness of the approach
+        2. Code quality and best practices
+        3. Areas for improvement
+        4. Score out of 10
+        
+        Be constructive and educational in your feedback.
+        """
+        
+        try:
+            response = self.llm.invoke(evaluation_prompt)
+            return getattr(response, 'content', str(response))
+        except Exception as e:
+            return f"Error evaluating code: {e}"
