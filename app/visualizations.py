@@ -640,65 +640,36 @@ class MLVisualizer:
         algorithm_lower = algorithm.lower().replace(' ', '_').replace('-', '_')
         
         algorithm_map = {
-            # Data Preprocessing
+            # Data Preprocessing - with actual visualizations
             'missing_data': self.create_missing_data_viz,
             'feature_scaling': self.create_feature_scaling_viz,
-            'encoding': self.create_encoding_viz,
             
-            # Regression
+            # Regression - with actual visualizations
             'linear_regression': self.create_linear_regression_viz,
             'polynomial_regression': self.create_polynomial_regression_viz,
-            'svr': self.create_svr_viz,
             'decision_tree_regression': self.create_decision_tree_regression_viz,
             'random_forest_regression': self.create_random_forest_viz,
             
-            # Classification
+            # Classification - with actual visualizations
             'logistic_regression': self.create_classification_viz,
             'k_nn': self.create_knn_viz,
             'knn': self.create_knn_viz,
-            'svm': self.create_svm_viz,
-            'naive_bayes': self.create_naive_bayes_viz,
-            'decision_tree_classification': self.create_decision_tree_classification_viz,
-            'random_forest_classification': self.create_random_forest_classification_viz,
             
-            # Clustering
+            # Clustering - with actual visualizations
             'k_means': self.create_clustering_viz,
             'kmeans': self.create_clustering_viz,
             'hierarchical_clustering': self.create_hierarchical_clustering_viz,
             
-            # Association Rule Learning
-            'apriori': self.create_apriori_viz,
-            'eclat': self.create_eclat_viz,
-            
-            # Reinforcement Learning
-            'ucb': self.create_ucb_viz,
-            'thompson_sampling': self.create_thompson_sampling_viz,
-            'q_learning': self.create_q_learning_viz,
-            
-            # NLP
+            # NLP - with actual visualizations
             'bag_of_words': self.create_bow_viz,
             'bow': self.create_bow_viz,
-            'tf_idf': self.create_tfidf_viz,
-            'tfidf': self.create_tfidf_viz,
-            'word2vec': self.create_word2vec_viz,
-            'bert': self.create_bert_viz,
             
-            # Deep Learning
-            'ann': self.create_ann_viz,
-            'cnn': self.create_cnn_viz,
-            'rnn': self.create_rnn_viz,
-            'lstm': self.create_lstm_viz,
-            
-            # Dimensionality Reduction
+            # Dimensionality Reduction - with actual visualizations
             'pca': self.create_pca_viz,
             'lda': self.create_lda_viz,
-            'kernel_pca': self.create_kernel_pca_viz,
             
-            # Model Selection & Boosting
+            # Model Selection & Boosting - with actual visualizations
             'cross_validation': self.create_cross_validation_viz,
-            'grid_search': self.create_grid_search_viz,
-            'xgboost': self.create_xgboost_viz,
-            'adaboost': self.create_adaboost_viz,
             'random_forest': self.create_random_forest_viz
         }
         
@@ -712,6 +683,28 @@ class MLVisualizer:
                 return method()
         
         return None
+    
+    def has_visualization(self, algorithm: str) -> bool:
+        """Check if an algorithm has a specific visualization available"""
+        algorithm_lower = algorithm.lower().replace(' ', '_').replace('-', '_')
+        
+        algorithms_with_viz = {
+            'missing_data', 'feature_scaling', 'linear_regression', 'polynomial_regression',
+            'decision_tree_regression', 'random_forest_regression', 'logistic_regression',
+            'k_nn', 'knn', 'k_means', 'kmeans', 'hierarchical_clustering', 'bag_of_words',
+            'bow', 'pca', 'lda', 'cross_validation', 'random_forest'
+        }
+        
+        # Check exact match
+        if algorithm_lower in algorithms_with_viz:
+            return True
+        
+        # Check partial matches
+        for algo in algorithms_with_viz:
+            if algo in algorithm_lower or algorithm_lower in algo:
+                return True
+        
+        return False
     
     def create_algorithm_comparison_chart(self) -> go.Figure:
         """Create algorithm comparison chart"""
