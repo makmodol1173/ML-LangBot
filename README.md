@@ -56,7 +56,7 @@ The application is organized into modular, object-oriented components:
    ```
    Or directly:
    ```bash
-   python main.py
+   streamlit run main.py
    ```
 
 The app will open in your browser at http://localhost:8501
